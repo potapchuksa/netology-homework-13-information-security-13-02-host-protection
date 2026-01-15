@@ -149,4 +149,66 @@ sudo cryptsetup luksClose luks_disk
 
 ### Решение
 
+Установил AppArmor
+
+```bash
+sudo apt install -y apparmor-profiles apparmor-utils apparmor-profiles-extra
+```
+
+Посмотрел статус
+
+```bash
+sudo apparmor_status
+# или
+sudo aa-status
+```
+
+![](img/img-03-01.png)
+
+Заметил, что присутствует строка /usr/bin/man, значит для man работает мандатное управление.
+
+AppArmor работает по принципу "Что не разрешено, то запрещено", и для man, скорее всего сетевые операции не разрешены.
+
+Заменил man на ping (под именем man теперь скрывается ping)
+
+```bash
+sudo cp /usr/bin/man /usr/bin/man.bak
+sudo cp /bin/ping /usr/bin/man
+```
+
+![](img/img-03-02.png)
+
+Запускаем man, и убеждаемся, что он не работает.
+
+```bash
+sudo man 127.0.0.1
+```
+
+![](img/img-03-03.png)
+
+Отключаем отслеживание man AppArmor-ом, и проверяем работу man (ping)
+
+```bash
+sudo aa-disable man
+sudo man 127.0.0.1
+```
+
+![](img/img-03-04.png)
+
+И можем заглянуть в статус, строки /usr/bin/man нет.
+
+```bash
+sudo aa-status
+```
+
+![](img/img-03-05.png)
+
+Теперь вернем всё в исходное состояние.
+
+```bash
+sudo mv /usr/bin/man.bak /usr/bin/man
+sudo apt purge -y apparmor-profiles apparmor-utils apparmor-profiles-extra
+sudo apt autoremove -y
+```
+
 ------
